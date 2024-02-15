@@ -1,19 +1,26 @@
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import landscape, A5
 from reportlab.lib.units import cm
+from pdf2docx import Converter
 
-class Output:
-
+class OutputPDF:
     def __init__(self, rebut, num):
         # Create a canvas for A5 paper size
-        pathfile = "./data/rebut_{:d}.pdf".format(rebut['rebut_num'])
-        self.c = canvas.Canvas(pathfile, pagesize=landscape(A5))
+        self.pathfile = "./rebuts/rebut_{:d}".format(rebut['rebut_num'])
+        self.c = canvas.Canvas(self.pathfile + ".pdf", pagesize=landscape(A5))
 
         # draw background greti
-        self.c.drawImage('./img/greti.jpg', -7.5*cm, -5*cm, mask=[0,0,0,0,0,0])
+        self.c.drawImage('./img/greti.jpg', -8*cm, -5*cm, mask=[0,0,0,0,0,0])
         
         # draw logo
         self.c.drawImage('./img/logo.jpg',x= 0.5*cm,y = 12*cm, width=2*cm, height=2.2*cm)
+
+        # print company's name
+        self.c.setFont("Times-Bold", 12)
+        self.c.setFillColorRGB(0,0,0) # font colour
+        self.c.drawString(x = 8.6*cm, y = 14*cm, text = "MONPIRATA S.L.")
+        self.c.setFont("Helvetica", 9)
+        self.c.drawString(x = 9.5*cm, y = 13.7*cm, text = "B56200504")        
 
         # print company's info
         self.c.setStrokeColorRGB(0.1,0.8,0.1)
@@ -36,7 +43,7 @@ class Output:
 
         # print titols dels conceptes
         self.c.setFont("Times-Roman", 22)
-        self.c.drawString(0.5*cm,9*cm,'Productes')
+        #self.c.drawString(0.5*cm,9*cm,'Productes')
         self.c.drawString(7*cm,9*cm,'Preu')
         self.c.drawString(10*cm,9*cm,'Quantitat')
         self.c.drawString(17*cm,9*cm,'Total')
@@ -49,7 +56,8 @@ class Output:
         self.c.line(0.5*cm,2.5*cm,20*cm,2.5*cm)# horizontal line total
 
         # print down part title
-        self.c.drawString(1.2*cm,1.5*cm,'Data')
+        self.c.drawString(1.2*cm,1.5*cm,'Data:')
+        self.c.drawString(7*cm,1.5*cm,'Nom:')
         self.c.setFillColorRGB(0,0,0) # font colour
         self.c.setFont("Times-Roman", 22)
         self.c.drawString(14.5*cm,1.8*cm,'Suma')
@@ -59,7 +67,7 @@ class Output:
         self.c.drawString(14.5*cm,0.3*cm,'Total:')
 
         # print rebut info
-        Output.fillRebutInfo(self, rebut)
+        OutputPDF.fillRebutInfo(self, rebut)
 
     def fillRebutInfo(self, rebut):
         # print data
@@ -75,7 +83,7 @@ class Output:
         cnt = 0
         total_importe = 0
         for producte in productes:
-            total_importe += Output.printProducte(self, rebut, producte, cnt)
+            total_importe += OutputPDF.printProducte(self, rebut, producte, cnt)
             cnt += 1
         
         # print suma
@@ -118,3 +126,7 @@ class Output:
     def generatePDF(self):
         # Save the PDF
         self.c.save()
+        # Create a PDF converter object and convert the PDF
+        # cv = Converter(self.pathfile + '.pdf')
+        # cv.convert(self.pathfile + '.docx', start=0, end=None)
+        # cv.close()

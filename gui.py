@@ -1,6 +1,7 @@
 import PySimpleGUI as sg
 from DataHandler import DataHandler
-from Output import Output
+from OutputPDF import OutputPDF
+from OutputExcel import OutputExcel
 
 sg.theme('DarkAmber')
 
@@ -27,11 +28,14 @@ while True:
         # and do something with it here
         dh = DataHandler(values)
         rebuts = dh.generateRebuts()
+        importes = dh.generateImportes()
 
         i = 0
         for rebut in rebuts:
-            Output(rebut, i).generatePDF()
+            OutputPDF(rebut, i).generatePDF()
             i+=1
+
+        OutputExcel(rebuts, importes).generateExcel()
 
         break
 

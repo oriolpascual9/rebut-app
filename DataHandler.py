@@ -45,6 +45,14 @@ class DataHandler:
         
         return rebuts
     
+    def generateImportes(self):
+        importes = []
+        if self.day.strftime("%A") == "Friday":
+            importes = DataHandler.generateImportesDiv(self)
+        else:
+            importes = [self.importe]
+        return importes
+    
     def generateRebutsDiv(self):
         rebuts = []
         div_percent = int(random.uniform(40,50)) / 100
@@ -53,9 +61,12 @@ class DataHandler:
         dim_percent = set_percent * (int(random.uniform(30,40)) / 100)
         dm_percent = set_percent * (int(random.uniform(25,40)) / 100)
         dll_percent = set_percent - dim_percent - dm_percent
-
+       
         # festes dll
         rebuts += DataHandler.generateFestes(self, dll_percent, self.day - timedelta(days=4), setmana)
+        
+        # quan nberenars es baix,
+        
         # festes dm
         rebuts += DataHandler.generateFestes(self, dm_percent, self.day - timedelta(days=3), setmana)
         # festes dim
@@ -66,6 +77,18 @@ class DataHandler:
         rebuts += DataHandler.generateFestes(self, div_percent, self.day, div)
 
         return rebuts
+
+    def generateImportesDiv(self):
+        div_percent = int(random.uniform(40,50)) / 100
+        dij_percent = int(random.uniform(25,32)) / 100
+        set_percent = 1 - div_percent - dij_percent
+        dim_percent = set_percent * (int(random.uniform(30,40)) / 100)
+        dm_percent = set_percent * (int(random.uniform(25,40)) / 100)
+        dll_percent = set_percent - dim_percent - dm_percent
+
+        return [self.importe*dll_percent, self.importe*dm_percent, 
+                self.importe*dim_percent, self.importe*dij_percent,
+                self.importe*div_percent]
 
     def generateRebutsDiss(self):
         rebuts = []
@@ -100,6 +123,10 @@ class DataHandler:
         nfestes = list(range(len(parts_berenars)))
         picapicafesta = Counter(random.choices(nfestes, k = math.floor(picapica_day)))
         xuxes_festa = Counter(random.choices(nfestes, k = math.floor(xuxes_day)))
+
+        # less than 10 participants per party, cancel and redistribute
+        if parts_berenars[0] <= 10:
+            return
 
         for i in range(len(parts_berenars)):
             npicapica = picapicafesta[i] if i in picapicafesta else 0
@@ -158,8 +185,7 @@ class DataHandler:
     
     def handleFiança(self, rebuts):
         # generate 3 or 4 random parties to take out fiança
-        nrebuts = list(range(len(rebuts)))
-
+        nrebuts = [index for index,festa in enumerate(rebuts) if festa['nberenars'] <= 14]
         max_festes = max(len(rebuts) - 1, 4)
         nfestes = random.randint(1,max_festes)
         festes = random.choices(nrebuts, k = nfestes)
