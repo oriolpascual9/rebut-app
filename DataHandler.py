@@ -14,7 +14,7 @@ xuxes, picapica, nrebut, fianca = fileHandler.readVariables()
 
 class DataHandler:
     def __init__(self, values):
-        self.importe = values['import']
+        self.importe = int(values['import'])
         self.nberenars = int(values['berenar'])
         self.npicapica = int(values['pica-pica'])
         self.nxuxes = int(values['xuxes'])
