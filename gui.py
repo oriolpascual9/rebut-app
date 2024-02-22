@@ -27,8 +27,8 @@ while True:
         # You can use the values dictionary to access the input data
         # and do something with it here
         dh = DataHandler(values)
-        rebuts = dh.generateRebuts()
-        importes = dh.generateImportes()
+        rebuts, no_festa_days = dh.generateRebuts()
+        importes = dh.generateImportes(no_festa_days)
 
         i = 0
         for rebut in rebuts:

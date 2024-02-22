@@ -7,12 +7,12 @@ values = {
     "berenar": 98,
     "pica-pica": 5,
     "xuxes": 71,
-    "data": "02-02-2024"
+    "data": "09-02-2024"
 }
 
 dh = DataHandler(values)
-rebuts = dh.generateRebuts()
-importes = dh.generateImportes()
+rebuts, no_festa_days = dh.generateRebuts()
+importes = dh.generateImportes(no_festa_days)
 
 i = 0
 for rebut in rebuts:

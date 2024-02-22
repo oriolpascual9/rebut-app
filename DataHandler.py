@@ -22,8 +22,9 @@ class DataHandler:
 
     def generateRebuts(self):
         rebuts = []
+        no_festa_days = []
         if self.day.strftime("%A") == "Friday":
-            rebuts = DataHandler.generateRebutsDiv(self)
+            rebuts, no_festa_days = DataHandler.generateRebutsDiv(self)
         elif self.day.strftime("%A") == "Saturday":
             rebuts = DataHandler.generateRebutsDiss(self)
         elif self.day.strftime("%A") == "Sunday":
@@ -43,12 +44,12 @@ class DataHandler:
         # update last number of rebut used
         fileHandler.writeRebutAndClose(nrebut)
         
-        return rebuts
+        return rebuts, no_festa_days
     
-    def generateImportes(self):
+    def generateImportes(self, no_festa_days):
         importes = []
         if self.day.strftime("%A") == "Friday":
-            importes = DataHandler.generateImportesDiv(self)
+            importes = DataHandler.generateImportesDiv(self, no_festa_days)
         else:
             importes = {self.day : self.importe}
         return importes
@@ -73,8 +74,9 @@ class DataHandler:
             1: dij_percent,
             0: div_percent
         }
-
-        while True:            
+        
+        no_festa_days = []           
+        while True:
             for key, percent in percents.items():
                 day_offset = key # div - 4 = dll
                 rebuts_before = rebuts.copy()
@@ -99,12 +101,13 @@ class DataHandler:
                 nrebut = parcial_nrebut
                 rebuts = []
 
-                percents = DataHandler.redistribucioFesta(self, percents, days_not_assigned)
+                percents, dia_no_assignat = DataHandler.redistribucioFesta(self, percents, days_not_assigned)
                 days_not_assigned = []
+                no_festa_days.append(dia_no_assignat)
 
-        return rebuts
+        return rebuts, no_festa_days
 
-    def generateImportesDiv(self):
+    def generateImportesDiv(self, no_festa_days):
         div_percent = int(random.uniform(40,50)) / 100
         dij_percent = int(random.uniform(25,32)) / 100
         set_percent = 1 - div_percent - dij_percent
@@ -112,32 +115,51 @@ class DataHandler:
         dm_percent = set_percent * (int(random.uniform(25,40)) / 100)
         dll_percent = set_percent - dim_percent - dm_percent
 
-        return {self.day - timedelta(days=4) : self.importe*dll_percent, 
-                self.day - timedelta(days=3) : self.importe*dm_percent, 
-                self.day - timedelta(days=2) : self.importe*dim_percent,
-                self.day - timedelta(days=1) :  self.importe*dij_percent,
-                self.day - timedelta(days=0) : self.importe*div_percent
-                }
+        importes = {
+            4 : self.importe*dll_percent, 
+            3 : self.importe*dm_percent, 
+            2 : self.importe*dim_percent,
+            1 : self.importe*dij_percent,
+            0 : self.importe*div_percent
+        }
+
+        for no_festa_dia in no_festa_days:
+            if no_festa_dia != None:
+                print(importes.keys())
+                # first we take 40% to be redistributed between the other days
+                distr = 0.4*importes[no_festa_dia] / (len(importes) - 1)
+                # then reduce the day with no party to 60%
+                importes[no_festa_dia] = 0.6*importes[no_festa_dia]
+        
+                importes = {key: (value if key == no_festa_dia else value + distr) for key, value in importes.items()}
+
+        importes = {self.day - timedelta(days=key): (value if key == no_festa_dia else value + distr) for key, value in importes.items()}
+
+        return importes
 
     def generateRebutsDiss(self):
         rebuts = []
+        rebuts2 = []
         mati_percent = int(random.uniform(40,55)) / 100
         tarda_percent = 1 - mati_percent
         
         # festes diss mati
-        rebuts += DataHandler.generateFestes(self, mati_percent, self.day, diss_mt)
+        while len(rebuts) == 0:
+            rebuts = DataHandler.generateFestes(self, mati_percent, self.day, diss_mt)
 
         # festes diss tarda
-        rebuts += DataHandler.generateFestes(self, tarda_percent, self.day, diss_td)
+        while len(rebuts2) == 0:
+            rebuts2 = DataHandler.generateFestes(self, tarda_percent, self.day, diss_td)
 
-        return rebuts
+        return rebuts + rebuts2
     
     def generateRebutsDium(self):
         rebuts = []
         dium_percent = 1
         
         # festes diss mati
-        rebuts += DataHandler.generateFestes(self, dium_percent, self.day, dium)
+        while len(rebuts) == 0:
+            rebuts += DataHandler.generateFestes(self, dium_percent, self.day, dium)
         
         return rebuts
 
@@ -249,6 +271,7 @@ class DataHandler:
 
         # per algun motiu de vegades divendres(0) no l'assigna
         # si nomes es divendres la llista de keys estara buida
+        key_to_remove = None
         if len(keys) > 0:
             # Select a random key to remove
             key_to_remove = random.choice(keys)
@@ -272,5 +295,5 @@ class DataHandler:
         # retorna un merge dels dictionaris, si concideixen agafa els valors de percents_not_assigned
         result = {**percents, **percents_not_assigned}
 
-        return {**percents, **percents_not_assigned}
+        return {**percents, **percents_not_assigned}, key_to_remove
 

@@ -11,11 +11,11 @@ class OutputExcel:
         # ordenar per data per poder fer match amb l'import
         self.df_total.index = pd.to_datetime(self.df_total.index, format = "%d/%m/%y")
         self.df_total.sort_index(inplace=True)
+
         df_importes = pd.Series(importes, name = 'import')
         df_importes.index = pd.to_datetime(df_importes.index, format = "%d/%m/%y")
         self.df_total = pd.concat([self.df_total, df_importes], axis=1)
         self.df_total = self.df_total.fillna(0)
-        print(self.df_total)
 
         # generem la base restant el 10% del import total
         self.df_total["base"] = self.df_total["import"].apply(lambda x: x/1.1)
@@ -37,6 +37,12 @@ class OutputExcel:
 
             if os.path.exists(filename):
                 existing_df = pd.read_excel(filename)
-                df = pd.concat([existing_df,df], axis=1)
+                existing_df.index = pd.to_datetime(existing_df['Data'], format = "%d/%m/%y")
+                existing_df = existing_df.rename(columns=dict(zip(headers,columns)))
+
+                # Drop rows in existing_df that have an index in df
+                existing_df = existing_df.drop(index=df.index.intersection(existing_df.index), errors='ignore')
+
+                df = pd.concat([existing_df,df], join = 'inner')
 
             df.to_excel(filename, index=False, columns=columns, header=headers)
