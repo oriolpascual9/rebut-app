@@ -50,10 +50,13 @@ class DataHandler:
         if self.day.strftime("%A") == "Friday":
             importes = DataHandler.generateImportesDiv(self)
         else:
-            importes = [self.importe]
+            importes = {self.day : self.importe}
         return importes
     
     def generateRebutsDiv(self):
+        global nrebut
+        parcial_nrebut = nrebut
+
         rebuts = []
         div_percent = int(random.uniform(40,50)) / 100
         dij_percent = int(random.uniform(25,32)) / 100
@@ -61,20 +64,43 @@ class DataHandler:
         dim_percent = set_percent * (int(random.uniform(30,40)) / 100)
         dm_percent = set_percent * (int(random.uniform(25,40)) / 100)
         dll_percent = set_percent - dim_percent - dm_percent
-       
-        # festes dll
-        rebuts += DataHandler.generateFestes(self, dll_percent, self.day - timedelta(days=4), setmana)
-        
-        # quan nberenars es baix,
-        
-        # festes dm
-        rebuts += DataHandler.generateFestes(self, dm_percent, self.day - timedelta(days=3), setmana)
-        # festes dim
-        rebuts += DataHandler.generateFestes(self, dim_percent, self.day - timedelta(days=2), setmana)
-        # festes dij
-        rebuts += DataHandler.generateFestes(self, dij_percent, self.day - timedelta(days=1), setmana)
-        # festes div
-        rebuts += DataHandler.generateFestes(self, div_percent, self.day, div)
+
+        days_not_assigned = []
+        percents = {
+            4: dll_percent,
+            3: dm_percent,
+            2: dim_percent,
+            1: dij_percent,
+            0: div_percent
+        }
+
+        while True:            
+            for key, percent in percents.items():
+                day_offset = key # div - 4 = dll
+                rebuts_before = rebuts.copy()
+                # festes dll, dm, dim, dj
+                if day_offset > 0:
+                    rebuts += DataHandler.generateFestes(self, percent, self.day - timedelta(days=day_offset), setmana)
+                else: # div canvia el preu
+                    rebuts += DataHandler.generateFestes(self, percent, self.day, div)
+                
+                # no hi ha suficients berenars per generar una festa (nberenars<=10)
+                if rebuts_before == rebuts:
+                    days_not_assigned.append(day_offset)
+                
+                day_offset -= 1
+            
+            # all days have been assigned we may proceed
+            if len(days_not_assigned) == 0:
+                break
+                
+            # there is not enough berenars for all days, prepare redistribution
+            else:
+                nrebut = parcial_nrebut
+                rebuts = []
+
+                percents = DataHandler.redistribucioFesta(self, percents, days_not_assigned)
+                days_not_assigned = []
 
         return rebuts
 
@@ -86,9 +112,12 @@ class DataHandler:
         dm_percent = set_percent * (int(random.uniform(25,40)) / 100)
         dll_percent = set_percent - dim_percent - dm_percent
 
-        return [self.importe*dll_percent, self.importe*dm_percent, 
-                self.importe*dim_percent, self.importe*dij_percent,
-                self.importe*div_percent]
+        return {self.day - timedelta(days=4) : self.importe*dll_percent, 
+                self.day - timedelta(days=3) : self.importe*dm_percent, 
+                self.day - timedelta(days=2) : self.importe*dim_percent,
+                self.day - timedelta(days=1) :  self.importe*dij_percent,
+                self.day - timedelta(days=0) : self.importe*div_percent
+                }
 
     def generateRebutsDiss(self):
         rebuts = []
@@ -126,7 +155,7 @@ class DataHandler:
 
         # less than 10 participants per party, cancel and redistribute
         if parts_berenars[0] <= 10:
-            return
+            return []
 
         for i in range(len(parts_berenars)):
             npicapica = picapicafesta[i] if i in picapicafesta else 0
@@ -188,9 +217,13 @@ class DataHandler:
         nrebuts = [index for index,festa in enumerate(rebuts) if festa['nberenars'] <= 14]
         max_festes = max(len(rebuts) - 1, 4)
         nfestes = random.randint(1,max_festes)
-        festes = random.choices(nrebuts, k = nfestes)
-        for i in festes:
-            rebuts[i]['fiança'] = 0
+        
+        # nomes amb fiança 0 per festa de menys de 14
+        # sino hi ha doncs saltem pas
+        if len(nrebuts) != 0:
+            festes = random.choices(nrebuts, k = nfestes)
+            for i in festes:
+                rebuts[i]['fiança'] = 0
 
         return rebuts
     
@@ -199,4 +232,45 @@ class DataHandler:
         rebut['import'] += rebut['xuxes'] * xuxes
         rebut['import'] += rebut['picapica'] * picapica
 
-        return rebut      
+        return rebut
+    
+    def redistribucioFesta(self, percents, days_not_assigned):
+        # aquesta funcio agafa els dies que no han sigut assignats per insuficiencia de berenars(<10)
+        # si hi ha més d'un dia no assignat els combina per provar si s'arriba al minim de dinars
+        # si només n'hi ha un reparteix el percentatge entre els dies assignats
+
+        # create dictionary with not assigned percents
+        percents_not_assigned = {key: percents[key] for key in percents if key in days_not_assigned}
+
+        # Create a list of keys, weighted by their magnitude (higher keys have more chance to be selected)
+        keys = []
+        for key in percents_not_assigned.keys():
+            keys.extend([key] * key)  # Multiply the occurrence of each key by its value
+
+        # per algun motiu de vegades divendres(0) no l'assigna
+        # si nomes es divendres la llista de keys estara buida
+        if len(keys) > 0:
+            # Select a random key to remove
+            key_to_remove = random.choice(keys)
+
+            # if there is just one day not assigned the value needs to be shared to all the other percents
+            # you cannot try to share
+            if len(days_not_assigned) == 1:
+                percents_not_assigned = percents
+
+            # Calculate the value to distribute among other keys
+            value_to_distribute = percents_not_assigned[key_to_remove] / (len(percents_not_assigned) - 1)
+
+            # Remove the selected key
+            del percents_not_assigned[key_to_remove]
+            if key_to_remove in percents: del percents[key_to_remove]
+
+            # Distribute the value of the removed key evenly among the remaining keys
+            for key in percents_not_assigned:
+                percents_not_assigned[key] += value_to_distribute
+
+        # retorna un merge dels dictionaris, si concideixen agafa els valors de percents_not_assigned
+        result = {**percents, **percents_not_assigned}
+
+        return {**percents, **percents_not_assigned}
+

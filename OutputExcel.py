@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 
 class OutputExcel:
     def __init__(self,rebuts, importes):
@@ -10,8 +11,12 @@ class OutputExcel:
         # ordenar per data per poder fer match amb l'import
         self.df_total.index = pd.to_datetime(self.df_total.index, format = "%d/%m/%y")
         self.df_total.sort_index(inplace=True)
-        self.df_total["import"] = importes
-        
+        df_importes = pd.Series(importes, name = 'import')
+        df_importes.index = pd.to_datetime(df_importes.index, format = "%d/%m/%y")
+        self.df_total = pd.concat([self.df_total, df_importes], axis=1)
+        self.df_total = self.df_total.fillna(0)
+        print(self.df_total)
+
         # generem la base restant el 10% del import total
         self.df_total["base"] = self.df_total["import"].apply(lambda x: x/1.1)
         self.df_total["iva"] = self.df_total["base"].apply(lambda x: x * 0.1)
@@ -29,5 +34,9 @@ class OutputExcel:
             
             columns = ["date","base","iva","import","nberenars","picapica"]
             headers = ["Data","BI","IVA","Import","Berenars","Pica-pica"]
-            
+
+            if os.path.exists(filename):
+                existing_df = pd.read_excel(filename)
+                df = pd.concat([existing_df,df], axis=1)
+
             df.to_excel(filename, index=False, columns=columns, header=headers)
