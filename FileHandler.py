@@ -6,6 +6,10 @@ class FileHandler:
         self.filename = './info.json'
         self.f = open(self.filename, encoding='utf-8')
         self.data = json.load(self.f)
+
+        self.fn = open('./noms.json', encoding='utf-8')
+        self.noms = json.load(self.fn)
+        self.fn.close()
     
     def readVariables(self):
         # make info available in variables
@@ -31,3 +35,12 @@ class FileHandler:
         # write file
         with open(self.filename, 'w', encoding='utf-8') as f:
             json.dump(self.data, f)
+    
+    def readNameList(self):
+        # Create a list of keys, weighted by their magnitude (higher keys have more chance to be selected)
+        keys = []
+        for key, value in self.noms.items():
+            keys.extend([key] * value)  # Multiply the occurrence of each key by its value
+
+        return keys
+

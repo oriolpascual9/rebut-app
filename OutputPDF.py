@@ -93,6 +93,10 @@ class OutputPDF:
         # print total
         self.c.drawString(x = 17*cm, y = 0.3*cm, text = "{:.2f} €".format(total_importe - rebut['fiança']))
 
+        # print nnom
+        self.c.drawString(7*cm,1*cm, rebut['nom'])
+
+
     # returns importe total del producte
     def printProducte(self, rebut, producte, cnt):
         self.c.setStrokeColorRGB(0.1,0.8,0.1)

@@ -192,7 +192,7 @@ class DataHandler:
         nrebut += 1
 
         festa =  {
-            "nom" : "joan",
+            "nom" : DataHandler.findName(),
             "nberenars" : nberenars,
             "data" : date.strftime("%d/%m/%y"),
             "xuxes": nxuxes,
@@ -205,6 +205,10 @@ class DataHandler:
             "rebut_num": nrebut
         }
         return festa
+    
+    def findName():
+        noms = FileHandler().readNameList()
+        return random.choice(noms)
     
     def checkAndCorrect(self, rebuts):
         real_berenars = sum(rebut['nberenars'] for rebut in rebuts)
