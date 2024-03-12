@@ -1,7 +1,7 @@
 import PySimpleGUI as sg
-from DataHandler import DataHandler
-from OutputPDF import OutputPDF
-from OutputExcel import OutputExcel
+from src.DataHandler import DataHandler
+from src.OutputPDF import OutputPDF
+from src.OutputExcel import OutputExcel
 
 sg.theme('DarkAmber')
 
