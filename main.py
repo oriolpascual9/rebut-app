@@ -1,6 +1,6 @@
-from DataHandler import DataHandler
-from OutputPDF import OutputPDF
-from OutputExcel import OutputExcel
+from src.DataHandler import DataHandler
+from src.OutputPDF import OutputPDF
+from src.OutputExcel import OutputExcel
 
 values = {
     "import" : 1500,

@@ -269,14 +269,13 @@ class DataHandler:
         return rebuts
     
     def handleFiança(self, rebuts):
+        num_fiança = int(round(len(rebuts) * 0.2,0))
         nrebuts = [index for index,festa in enumerate(rebuts) if festa['nberenars'] <= 14]
-        max_festes = max(len(rebuts) - 1, 4)
-        nfestes = random.randint(1,max_festes)
-        
+
         # nomes amb fiança 0 per festa de menys de 14
         # sino hi ha doncs saltem pas
-        if len(nrebuts) != 0:
-            festes = random.choices(nrebuts, k = nfestes)
+        if len(nrebuts) != 0 and num_fiança > 0:
+            festes = random.choices(nrebuts, k = num_fiança)
             for i in festes:
                 rebuts[i]['fiança'] = 0
 
