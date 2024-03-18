@@ -16,7 +16,7 @@ layout = [
 ]
 
 # Create the Window
-window = sg.Window('Window Title', layout)
+window = sg.Window('Rebuts', layout)
 
 # Event Loop to process "events" and get the "values" of the inputs
 while True:
@@ -36,7 +36,9 @@ while True:
             i+=1
 
         OutputExcel(rebuts, importes).generateExcel()
-
+        
+        sg.popup('Completat amb èxit!', title='Success')
+        
         break
 
 window.close()

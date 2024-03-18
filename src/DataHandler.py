@@ -14,7 +14,7 @@ xuxes, picapica, nrebut, fianca = fileHandler.readVariables()
 
 class DataHandler:
     def __init__(self, values):
-        self.importe = int(values['import'])
+        self.importe = float(values['import'])
         self.nberenars = int(values['berenar'])
         self.npicapica = int(values['pica-pica'])
         self.nxuxes = int(values['xuxes'])
@@ -269,7 +269,6 @@ class DataHandler:
         return rebuts
     
     def handleFiança(self, rebuts):
-        # generate 3 or 4 random parties to take out fiança
         nrebuts = [index for index,festa in enumerate(rebuts) if festa['nberenars'] <= 14]
         max_festes = max(len(rebuts) - 1, 4)
         nfestes = random.randint(1,max_festes)
