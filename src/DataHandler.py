@@ -20,17 +20,26 @@ class DataHandler:
         self.nxuxes = int(values['xuxes'])
         self.day = datetime.strptime(values['data'], "%d-%m-%Y")
 
-    def generateRebuts(self):
+    def generateRebuts(self, unhandeled = False):
         rebuts = []
         no_festa_days = []
-        if self.day.strftime("%A") == "Friday":
-            rebuts, no_festa_days = DataHandler.generateRebutsDiv(self)
-        elif self.day.strftime("%A") == "Saturday":
-            rebuts = DataHandler.generateRebutsDiss(self)
-        elif self.day.strftime("%A") == "Sunday":
-            rebuts = DataHandler.generateRebutsDium(self)
-        else:
-            raise Exception("Data no correspon a div, diss o dium")
+
+        if unhandeled:
+            if self.day.strftime("%A") == "Saturday":
+                rebuts = DataHandler.generateRebutsDiss(self)
+            else:
+                rebuts = DataHandler.generateRebutsDium(self, unhandeled)
+
+        else: 
+            if self.day.strftime("%A") == "Friday":
+                rebuts, no_festa_days = DataHandler.generateRebutsDiv(self)
+            elif self.day.strftime("%A") == "Saturday":
+                rebuts = DataHandler.generateRebutsDiss(self)
+            elif self.day.strftime("%A") == "Sunday":
+                rebuts = DataHandler.generateRebutsDium(self)
+            else:
+                raise Exception("Data no correspon a div, diss o dium")
+        
         # rounding error will make sum not equaling totals for berenars, picapica o xuxes
         rebuts = DataHandler.checkAndCorrect(self,rebuts)
         rebuts = DataHandler.handleFiança(self,rebuts)
@@ -151,13 +160,22 @@ class DataHandler:
 
         return rebuts + rebuts2
     
-    def generateRebutsDium(self):
+    def generateRebutsDium(self, unhandeled):
         rebuts = []
         dium_percent = 1
+        preu = dium
+
+        if unhandeled:
+            if self.day.strftime("%A") == "Friday":
+                preu = div
+            elif self.day.strftime("%A") == "Sunday":
+                preu = dium
+            else:
+                preu = setmana
         
         # festes diss mati
         while len(rebuts) == 0:
-            rebuts += DataHandler.generateFestes(self, dium_percent, self.day, dium)
+            rebuts += DataHandler.generateFestes(self, dium_percent, self.day, preu)
         
         return rebuts
 
@@ -174,7 +192,7 @@ class DataHandler:
         xuxes_festa = Counter(random.choices(nfestes, k = math.floor(xuxes_day)))
 
         # less than 10 participants per party, cancel and redistribute
-        if parts_berenars[0] <= 10:
+        if parts_berenars[0] < 10:
             return []
 
         for i in range(len(parts_berenars)):
@@ -228,7 +246,6 @@ class DataHandler:
     def generateXuxes(self, rebuts):
         berenars_list = [rebut['nberenars'] for rebut in rebuts]
         final_sum, comb = DataHandler.find_closest_sum(berenars_list, self.nxuxes)
-
         for rebut in rebuts:
             for nxuxes in comb:
                 if rebut['nberenars'] == nxuxes:
@@ -242,11 +259,12 @@ class DataHandler:
         real_berenars = sum(rebut['nberenars'] for rebut in rebuts)
         real_picapica = sum(rebut['picapica'] for rebut in rebuts)
 
+        rebuts = DataHandler.generateXuxes(self, rebuts)
+        real_xuxes = sum(rebut['xuxes'] for rebut in rebuts)
+        rebuts = DataHandler.correct(self, 'xuxes', rebuts, real_xuxes, self.nxuxes)
+
         if real_berenars != self.nberenars:
             rebuts = DataHandler.correct(self, 'nberenars', rebuts, real_berenars, self.nberenars)
-            rebuts = DataHandler.generateXuxes(self, rebuts)
-            real_xuxes = sum(rebut['xuxes'] for rebut in rebuts)
-            rebuts = DataHandler.correct(self, 'xuxes', rebuts, real_xuxes, self.nxuxes)
 
         if real_picapica != self.npicapica:
             rebuts = DataHandler.correct(self, 'picapica', rebuts, real_picapica, self.npicapica)
@@ -254,11 +272,11 @@ class DataHandler:
         return rebuts
     
     def correct(self, key, rebuts, real, original):
-        if key == 'xuxes':
-            nrebuts = [idx for idx in list(range(len(rebuts))) if rebuts[idx][key] > 0]
-        else:
-            # generate as many random selected parties as elements missing
-            nrebuts = list(range(len(rebuts)))
+        #if key == 'xuxes':
+        #    nrebuts = [idx for idx in list(range(len(rebuts))) if rebuts[idx][key] > 0]
+        #else:
+        # generate as many random selected parties as elements missing
+        nrebuts = list(range(len(rebuts)))
 
         festes = Counter(random.choices(nrebuts, k = original - real))
 

@@ -1,11 +1,18 @@
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import landscape, A5
 from reportlab.lib.units import cm
+import os
 
 class OutputPDF:
     def __init__(self, rebut, num):
+        data_split = rebut['data'].split('/')
+        data = data_split[2] + '-' + data_split[1] + '-' + data_split[0]
         # Create a canvas for A5 paper size
-        self.pathfile = "./rebuts/rebut_{:d}".format(rebut['rebut_num'])
+        daypath = f"./rebuts/{data}"
+        if not os.path.exists(daypath):
+            os.makedirs(daypath)
+
+        self.pathfile = daypath + "/rebut_{:d}".format(rebut['rebut_num'])
         self.c = canvas.Canvas(self.pathfile + ".pdf", pagesize=landscape(A5))
 
         # draw background greti
