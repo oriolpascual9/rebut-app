@@ -12,6 +12,8 @@ layout = [
     [sg.Text('Total Berenars'), sg.InputText(key='berenar')],
     [sg.Text('Total Pica-piques'), sg.InputText(key='pica-pica')],
     [sg.Text('Total Xuxes'), sg.InputText(key='xuxes')],
+    [sg.Text('Hi ha algun festiu aquesta setmana?(nomes per divendres)')],
+    [sg.Listbox(["Dilluns", "Dimarts", "Dimecres", "Dijous", "Divendres"], key = 'festa_list', size=(10, 5), select_mode="multiple", enable_events=True)],
     [sg.Button('Submit'), sg.Button('Cancel')]
 ]
 
@@ -28,6 +30,7 @@ while True:
         # and do something with it here
         dh = DataHandler(values)
         rebuts, no_festa_days = dh.generateRebuts()
+        print(no_festa_days)
         importes = dh.generateImportes(no_festa_days)
 
         i = 0

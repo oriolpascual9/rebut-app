@@ -20,6 +20,16 @@ class DataHandler:
         self.nxuxes = int(values['xuxes'])
         self.day = datetime.strptime(values['data'], "%d-%m-%Y")
 
+        # Gestionar festius si n'hi ha
+        dia_dict = {
+            "Dilluns": 4,
+            "Dimarts": 3,
+            "Dimecres": 2,
+            "Dijous": 1,
+            "Divendres": 0
+        }
+        self.festius = [dia_dict[dia] for dia in values['festa_list']]
+
     def generateRebuts(self, unhandeled = False):
         rebuts = []
         no_festa_days = []
@@ -74,7 +84,6 @@ class DataHandler:
         dm_percent = set_percent * (int(random.uniform(25,40)) / 100)
         dll_percent = set_percent - dim_percent - dm_percent
 
-        days_not_assigned = []
         percents = {
             4: dll_percent,
             3: dm_percent,
@@ -83,7 +92,9 @@ class DataHandler:
             0: div_percent
         }
         
-        no_festa_days = []           
+        # Inicialitzem dies que no hi ha festa amb dies festius
+        days_not_assigned = self.festius
+        no_festa_days = []          
         while True:
             for key, percent in percents.items():
                 day_offset = key # div - 4 = dll
@@ -131,6 +142,14 @@ class DataHandler:
             0 : self.importe*div_percent
         }
 
+        for dia_festiu in self.festius:
+            if dia_festiu != None:
+                # first we take 40% to be redistributed between the other days
+                distr = importes[dia_festiu] / (len(importes) - 1)
+
+                importes = {key: (0 if key == dia_festiu else value + distr) for key, value in importes.items()}
+
+
         for no_festa_dia in no_festa_days:
             if no_festa_dia != None:
                 # first we take 40% to be redistributed between the other days
@@ -140,7 +159,8 @@ class DataHandler:
         
                 importes = {key: (value if key == no_festa_dia else value + distr) for key, value in importes.items()}
 
-        importes = {self.day - timedelta(days=key): (value if key == no_festa_dia else value + distr) for key, value in importes.items()}
+        # translacio de numero a format calendari pels imports
+        importes = {self.day - timedelta(days=key): value for key, value in importes.items()}
 
         return importes
 

@@ -21,6 +21,11 @@ class OutputExcel:
         self.df_total["base"] = self.df_total["import"].apply(lambda x: x/1.1)
         self.df_total["iva"] = self.df_total["base"].apply(lambda x: x * 0.1)
 
+        # round els imports a 2 números
+        self.df_total["import"] = self.df_total["import"].apply(lambda x: round(x,2))
+        self.df_total["iva"] = self.df_total["iva"].apply(lambda x: round(x,2))
+        self.df_total["base"] = self.df_total["base"].apply(lambda x: round(x,2))
+
     def generateExcel(self):
         self.df_total['date'] = list(map(lambda data: data.strftime("%d/%m/%y"),self.df_total.index))
 
@@ -34,6 +39,9 @@ class OutputExcel:
             
             columns = ["date","base","iva","import","nberenars","picapica"]
             headers = ["Data","BI","IVA","Import","Berenars","Pica-pica"]
+
+            if not os.path.exists("./facturacio/"):
+                os.makedirs("./facturacio/")
 
             if os.path.exists(filename):
                 existing_df = pd.read_excel(filename)
