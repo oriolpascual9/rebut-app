@@ -46,7 +46,7 @@ class DataHandler:
             elif self.day.strftime("%A") == "Saturday":
                 rebuts = DataHandler.generateRebutsDiss(self)
             elif self.day.strftime("%A") == "Sunday":
-                rebuts = DataHandler.generateRebutsDium(self)
+                rebuts = DataHandler.generateRebutsDium(self, False)
             else:
                 raise Exception("Data no correspon a div, diss o dium")
         
