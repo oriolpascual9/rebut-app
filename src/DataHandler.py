@@ -54,6 +54,7 @@ class DataHandler:
         rebuts = DataHandler.checkAndCorrect(self,rebuts)
         rebuts = DataHandler.handleFiança(self,rebuts)
         rebuts = [DataHandler.computeImport(self, rebut) for rebut in rebuts]
+        rebuts = DataHandler.writeNumRebut(self, rebuts)
 
         print("Correct nberenars: ", self.nberenars == sum(rebut['nberenars'] for rebut in rebuts))
         print("Correct nxuxes: ", self.nxuxes == sum(rebut['xuxes'] for rebut in rebuts))
@@ -173,10 +174,14 @@ class DataHandler:
         # festes diss mati
         while len(rebuts) == 0:
             rebuts = DataHandler.generateFestes(self, mati_percent, self.day, diss_mt)
+            while len(rebuts) >= 6:
+                rebuts = DataHandler.balanceRebuts(rebuts)
 
         # festes diss tarda
         while len(rebuts2) == 0:
             rebuts2 = DataHandler.generateFestes(self, tarda_percent, self.day, diss_td)
+            while len(rebuts) > 6:
+                rebuts = DataHandler.balanceRebuts(rebuts)
 
         return rebuts + rebuts2
     
@@ -196,6 +201,9 @@ class DataHandler:
         # festes diss mati
         while len(rebuts) == 0:
             rebuts += DataHandler.generateFestes(self, dium_percent, self.day, preu)
+        
+        while len(rebuts) > 12:
+            rebuts = DataHandler.balanceRebuts(rebuts)
         
         return rebuts
 
@@ -224,9 +232,6 @@ class DataHandler:
     
     def generateFesta(self, nberenars, nxuxes, npicapica, date, preu):
         # update the nrebut
-        global nrebut
-        nrebut += 1
-
         festa =  {
             "nom" : DataHandler.findName(),
             "nberenars" : nberenars,
@@ -238,7 +243,6 @@ class DataHandler:
             "preu_xuxes": xuxes,
             "preu_picapica": picapica,
             "fiança": fianca,
-            "rebut_num": nrebut
         }
         return festa
     
@@ -274,6 +278,23 @@ class DataHandler:
                     break
 
         return rebuts
+    
+    def balanceRebuts(rebuts):
+        i = 0
+        new_rebuts = []
+        while i + 1 < len(rebuts):
+            if i % 3 == 0:
+                rebuts[i]['xuxes'] += rebuts[i+1]['xuxes']
+                rebuts[i]['nberenars'] += rebuts[i+1]['nberenars']  
+                rebuts[i]['picapica'] += rebuts[i+1]['picapica']  
+
+            new_rebuts.append(rebuts[i])
+            if i % 3 == 0:
+                i+=2
+            else:
+                i+=1
+
+        return new_rebuts
        
     def checkAndCorrect(self, rebuts):
         real_berenars = sum(rebut['nberenars'] for rebut in rebuts)
@@ -288,6 +309,15 @@ class DataHandler:
 
         if real_picapica != self.npicapica:
             rebuts = DataHandler.correct(self, 'picapica', rebuts, real_picapica, self.npicapica)
+        
+        return rebuts
+
+    def writeNumRebut(self, rebuts):
+        global nrebut
+
+        for rebut in rebuts:
+            rebut['rebut_num'] = nrebut
+            nrebut += 1
         
         return rebuts
     
